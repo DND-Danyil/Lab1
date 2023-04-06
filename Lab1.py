@@ -48,13 +48,3 @@ plt.title("Кластерні дані")
 
 plt.tight_layout()
 plt.show()
-
-
-
-
-
-
-
-
-
-
