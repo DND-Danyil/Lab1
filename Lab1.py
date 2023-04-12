@@ -1,50 +1,55 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-from matplotlib.colors import ListedColormap
+from sklearn.metrics import silhouette_score
+from sklearn.cluster import MeanShift
 
-def shift_method(data):
-    model = KMeans(n_clusters=1, n_init=10)
-    model.fit(data)
-    wcss = model.inertia_
-    scores = []
-    for k in range(2, 15):
-        model = KMeans(n_clusters=k, n_init=10)
-        model.fit(data)
-        wcss_new = model.inertia_
-        if (wcss_new / wcss) < 0.5:
-            scores.append(model.score(data))
-            break
-        wcss = wcss_new
-        scores.append(model.score(data))
-    optimal_k = len(scores) + 1
-    kmeans = KMeans(n_clusters=optimal_k, n_init=10)
-    kmeans.fit(data)
-    return optimal_k, scores, kmeans.labels_, kmeans.cluster_centers_
+X = np.loadtxt('Data_Clustering.txt', delimiter=',')
 
-data = np.array([[0, 0], [0, 2], [0, 4], [0, 6], [0, 8], [0, 10], [2, 0], [2, 2], [2, 4], [2, 6], [2, 8], [2, 10], [4, 0], [4, 2], [4, 4], [4, 6], [4, 8], [4, 10], [6, 0], [6, 2], [6, 4], [6, 6], [6, 8], [6, 10], [8, 0], [8, 2], [8, 4], [8, 6], [8, 8], [8, 10], [10, 0], [10, 2], [10, 4], [10, 6], [10, 8], [10, 10]])
-clusters, scores, marks, centers = shift_method(data)
+bandwidth = MeanShift(bandwidth=2).fit(X)
+ms_centers = bandwidth.cluster_centers_
+
+scores = []
+values = np.arange(2, 16)
+for num_clusters in values:
+    kmeans = KMeans(init='k-means++', n_clusters=num_clusters, n_init=10)
+    kmeans.fit(X)
+    score = silhouette_score(X, kmeans.labels_, metric='euclidean')
+    print("Кількість кластерів =", num_clusters, "\nОцінка силуета =", score)
+    scores.append(score)
+
+num_clusters = np.argmax(scores) + values[0]
+print("\nОптимальна кількість кластерів =", num_clusters)
+
+kmeans = KMeans(init='k-means++', n_clusters=num_clusters, n_init=10)
+kmeans.fit(X)
+y_pred = kmeans.predict(X)
 
 plt.subplot(2, 2, 1)
-plt.scatter(data[:, 0], data[:, 1])
-plt.title("Вихідні точки на площині")
+plt.scatter(X[:,0], X[:,1], color='black', s=50, marker='o')
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+plt.title('Вихідні точки на площині')
+plt.xlim(x_min, x_max)
+plt.ylim(y_min, y_max)
+plt.xticks(())
+plt.yticks(())
 
 plt.subplot(2, 2, 2)
-plt.scatter(data[:, 0], data[:, 1], c=marks)
-plt.scatter(centers[:, 0], centers[:, 1], marker='x', color='r', s=200, linewidths=3)
-plt.title("Центри кластерів")
+plt.scatter(X[:,0], X[:,1], color='black', s=50, marker='o')
+plt.scatter(ms_centers[:,0], ms_centers[:,1], color='red', s=150, linewidths=3, marker='x')
+plt.title('Центри кластерів')
 
 plt.subplot(2, 2, 3)
-plt.bar(range(2, clusters+1), scores)
-plt.title("Оцінка для різної кількості кластерів")
-plt.xlabel("Кількість кластерів")
-plt.ylabel("Оцінка")
+plt.bar(values, scores, width=0.7, color='black', align='center')
+plt.xticks(values)
+plt.title('Кількість кластерів vs оцінка силуета')
+plt.xlabel('Кількість кластерів')
+plt.ylabel('Оцінка силуета')
 
 plt.subplot(2, 2, 4)
-cmap = ListedColormap(['r', 'g', 'b', 'y', 'c', 'm'])
-plt.scatter(data[:, 0], data[:, 1], c=marks, cmap=cmap)
-plt.scatter(centers[:, 0], centers[:, 1], marker='x', color='k', s=200, linewidths=3)
-plt.title("Кластерні дані")
+plt.scatter(X[:, 0], X[:, 1], c=y_pred, s=50, cmap='viridis')
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=150, color='red', linewidths=3, marker='x')
+plt.title('Кластерні дані')
 
-plt.tight_layout()
 plt.show()
