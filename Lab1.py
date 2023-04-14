@@ -27,17 +27,11 @@ y_pred = kmeans.predict(X)
 
 plt.subplot(2, 2, 1)
 plt.scatter(X[:,0], X[:,1], color='black', s=50, marker='o')
-x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 plt.title('Вихідні точки на площині')
-plt.xlim(x_min, x_max)
-plt.ylim(y_min, y_max)
-plt.xticks(())
-plt.yticks(())
 
 plt.subplot(2, 2, 2)
 plt.scatter(X[:,0], X[:,1], color='black', s=50, marker='o')
-plt.scatter(ms_centers[:,0], ms_centers[:,1], color='red', s=150, linewidths=3, marker='x')
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=150, color='red', linewidths=3, marker='x')
 plt.title('Центри кластерів')
 
 plt.subplot(2, 2, 3)
@@ -48,7 +42,13 @@ plt.xlabel('Кількість кластерів')
 plt.ylabel('Оцінка силуета')
 
 plt.subplot(2, 2, 4)
-plt.scatter(X[:, 0], X[:, 1], c=y_pred, s=50, cmap='viridis')
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.01), np.arange(y_min, y_max, 0.01))
+Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap='viridis', alpha=0.5)
+plt.scatter(X[:,0], X[:,1], color='black', s=50, marker='o')
 plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=150, color='red', linewidths=3, marker='x')
 plt.title('Кластерні дані')
 
